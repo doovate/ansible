@@ -8,12 +8,12 @@
     domain:
 
   tasks:
-    - name: Comprobar que terraform existe
+    - name: Check if terraform exists
       ansible.builtin.command: terraform version
       register: tf_version
       changed_when: false
 
-    - name: Eliminar archivo credentials.auto.tfvars si existe
+    - name: Delete credentials.auto.tfvars if it exists
       ansible.builtin.file:
         path: "{{ tf_dir }}/credentials.auto.tfvars"
         state: absent
