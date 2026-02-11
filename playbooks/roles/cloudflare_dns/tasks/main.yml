@@ -6,10 +6,9 @@
     value: "{{ forward_ip }}"
     api_token: "{{ lookup('env', 'CLOUDFLARE_TOKEN') }}"
     comment: "DNS record created by Ansible for client {{ compose_project_name }}"
-  loop: "{{ domain }}"
+  loop: "{{ domain.split(',') | map('trim') | list }}"
   when:
     - item is defined
     - item | length > 0
     - item.split('.') | length > 2
   register: record
-
