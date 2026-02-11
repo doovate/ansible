@@ -12,7 +12,7 @@
 - name: Deploy and configure a set of Odoo containers
   hosts: "device_roles_odoo:&prod"
   vars_files:
-    - ../group_vars/all/vault.yml
+    - vault.yml
   become: true
 
   roles:
