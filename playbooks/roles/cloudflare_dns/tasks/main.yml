@@ -1,0 +1,9 @@
+- name: Create a test.example.net A record to point to 127.0.0.1
+  community.general.cloudflare_dns:
+    zone: doovate.com
+    record: ansible
+    type: A
+    value: "{{ forward_ip }}"
+#    account_email: "{{ cloudflare_email }}"
+    api_token: "{{ cloudflare_token }}"
+  register: record

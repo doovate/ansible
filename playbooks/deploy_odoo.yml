@@ -16,6 +16,7 @@
   roles:
     - docker
     - install_pip
+    - cloudflare_dns
     - odoo_docker
     - loki_client
     - odoo_traefik_dynamic
