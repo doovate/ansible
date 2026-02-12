@@ -6,7 +6,6 @@
       Content-Type: "application/json"
   register: cf_zone_check
   loop: "{{ domain.split(',') | map('trim') | list }}"
-  no_log: true
   when:
     - item is defined
     - item | length > 0
