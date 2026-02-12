@@ -63,17 +63,6 @@
   register: env_file
   notify: relaunch containers
 
-# Todo: figure out proper permissions for these directories
-- name: Set 777 permissions recursively on Odoo writable directories
-  file:
-    path: "{{ odoo_path }}/{{ item }}"
-    mode: '0777'
-    recurse: yes
-  loop:
-    - addons
-    - cache
-    - config
-
 - name: Configure containers to use available resources
   command:
     chdir: "{{ odoo_path }}"
@@ -259,6 +248,17 @@
     dest: "{{ odoo_path }}/addons/base_addons_list/__manifest__.py"
     mode: '0644'
   when: base_addons | default([]) | length > 0
+
+# Todo: figure out proper permissions for these directories
+- name: Set 777 permissions recursively on Odoo writable directories
+  file:
+    path: "{{ odoo_path }}/{{ item }}"
+    mode: '0777'
+    recurse: yes
+  loop:
+    - addons
+    - cache
+    - config
 
 - name: Obtain container info
   community.docker.docker_container_info:
