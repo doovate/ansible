@@ -1,3 +1,14 @@
+- name: Detect full run
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: assert limit
+      run_once: yes
+      assert:
+        that:
+          - 'ansible_limit is defined'
+        fail_msg: Playbook must be run with a limit
+
 - name: Relaunch Odoo containers
   hosts: "device_roles_odoo:&prod"
   become: true
