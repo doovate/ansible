@@ -28,10 +28,9 @@
 - name: Fail if any zone is not owned by this Cloudflare account
   fail:
     msg: >-
-      Estos dominios no están en tu cuenta de Cloudflare:
+      One or more subdomains can not be created because the domain is not available:
       {{ cf_not_owned | join(', ') }}
   when: (cf_not_owned | default([]) | length) > 0
-
 
 - name: Create DNS records for each subdomain
   community.general.cloudflare_dns:
