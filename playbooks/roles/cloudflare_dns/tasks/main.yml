@@ -15,9 +15,12 @@
   fail:
     msg: "El dominio {{ item.item }} no está en tu cuenta de Cloudflare"
   loop: "{{ cf_zone_check.results }}"
+  no_log: true
   when:
     - item.skipped is not defined
     - item.json.result | length == 0
+  loop_control:
+    label: "{{ item.item.split('.')[-2:] | join('.') }}"
 
 - name: Create DNS records for each subdomain
   community.general.cloudflare_dns:
