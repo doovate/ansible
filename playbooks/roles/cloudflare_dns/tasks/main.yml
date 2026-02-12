@@ -1,3 +1,23 @@
+- name: Verify ownership of DNS zones in Cloudflare
+  uri:
+    url: "https://api.cloudflare.com/client/v4/zones?name={{ item.split('.')[-2:] | join('.') }}"
+    headers:
+      Authorization: "Bearer {{ lookup('env', 'CLOUDFLARE_TOKEN') }}"
+      Content-Type: "application/json"
+  register: cf_zone_check
+  loop: "{{ domain.split(',') | map('trim') | list }}"
+  when:
+    - item is defined
+    - item | length > 0
+
+- name: Fail if any zone is not owned by this Cloudflare account
+  fail:
+    msg: "El dominio {{ item.item }} no está en tu cuenta de Cloudflare"
+  loop: "{{ cf_zone_check.results }}"
+  when:
+    - item.skipped is not defined
+    - item.json.result | length == 0
+
 - name: Create DNS records for each subdomain
   community.general.cloudflare_dns:
     zone: "{{ item.split('.')[-2:] | join('.') }}"
