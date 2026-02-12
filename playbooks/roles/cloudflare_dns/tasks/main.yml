@@ -15,7 +15,7 @@
   fail:
     msg: "El dominio {{ item.item }} no está en tu cuenta de Cloudflare"
   loop: "{{ cf_zone_check.results }}"
-  no_log: true
+#  no_log: true
   when:
     - item.skipped is not defined
     - item.json.result | length == 0
