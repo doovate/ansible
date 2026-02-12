@@ -11,11 +11,14 @@
 
 - name: Deploy and configure a set of Odoo containers
   hosts: "device_roles_odoo:&prod"
+#  vars_files:
+#    - vault.yml
   become: true
 
   roles:
     - docker
     - install_pip
+    - cloudflare_dns
     - odoo_docker
     - loki_client
     - odoo_traefik_dynamic
