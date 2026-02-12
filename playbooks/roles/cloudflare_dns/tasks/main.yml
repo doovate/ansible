@@ -11,16 +11,27 @@
     - item is defined
     - item | length > 0
 
-- name: Fail if any zone is not owned by this Cloudflare account
-  fail:
-    msg: "El dominio {{ item.item }} no está en tu cuenta de Cloudflare"
+- name: Build list of domains not owned in Cloudflare
+  set_fact:
+    cf_not_owned: >-
+      {{
+        (cf_not_owned | default([]))
+        + [ item.item ]
+      }}
   loop: "{{ cf_zone_check.results }}"
-#  no_log: true
   when:
     - item.skipped is not defined
-    - item.json.result | length == 0
+    - (item.json.result | length) == 0
   loop_control:
     label: "{{ item.item.split('.')[-2:] | join('.') }}"
+
+- name: Fail if any zone is not owned by this Cloudflare account
+  fail:
+    msg: >-
+      Estos dominios no están en tu cuenta de Cloudflare:
+      {{ cf_not_owned | join(', ') }}
+  when: (cf_not_owned | default([]) | length) > 0
+
 
 - name: Create DNS records for each subdomain
   community.general.cloudflare_dns:
