@@ -97,7 +97,7 @@
 
 - name: Generate hashed master password
   ansible.builtin.command:
-    cmd: python3 -c "from passlib.hash import pbkdf2_sha512; print(pbkdf2_sha512.hash('{{ master_password }}'))"
+    cmd: python3 -c "from passlib.hash import pbkdf2_sha512; print(pbkdf2_sha512.hash('{{ initial_db_master_pass }}'))"
   register: hashed_master_password
   changed_when: false
   delegate_to: localhost
