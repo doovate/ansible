@@ -25,14 +25,21 @@
     force: yes
   register: git_updated
 
+- name: Check that the Odoo folder exists
+  stat:
+    path: "{{ odoo_path }}"
+  register: odoo_folder_exists
+
 - name: Sync files to production directory
   ansible.builtin.synchronize:
     src: /tmp/docker_repo_tmp/
     dest: "{{ odoo_path }}"
     delete: no
     recursive: yes
+    rsync_opts:
+      - "--chown=tsg:tsg" # Forces the owner and group of the files to be changed to the user and group specified.
   delegate_to: "{{ inventory_hostname }}"
-  when: git_updated.changed
+  when: git_updated.changed or not odoo_folder_exists.stat.exists
   register: git_output
   notify: relaunch containers
 
@@ -40,17 +47,22 @@
   file:
     path: "{{ odoo_path }}/{{ item }}"
     state: directory
-    mode: '0777'
+    mode: '0755'
+    owner: tsg
+    group: tsg
   loop:
     - addons
     - cache
+    - config
 
 - name: Create the necessary files for the Odoo docker containers
   copy:
     content: ""
     dest: "{{ odoo_path }}/{{ item }}"
     force: no
-    mode: '0755'
+    mode: '0644'
+    owner: tsg
+    group: tsg
   loop:
     - cache/addons_cache.json
     - addons/requirements.txt
@@ -60,15 +72,56 @@
     src: odoo.env.j2
     dest: "{{ odoo_path }}/.env"
     mode: '0644'
+    owner: tsg
+    group: tsg
   register: env_file
   notify: relaunch containers
 
-- name: Configure containers to use available resources
-  command:
-    chdir: "{{ odoo_path }}"
-    cmd: "{{ docker_launcher }} config auto-config"
-  when: git_output.changed or env_file.changed
+- name: Create postgresql.conf file from template
+  template:
+    src: postgresql.conf.j2
+    dest: "{{ odoo_path }}/config/postgresql.conf"
+    mode: '0644'
+    owner: tsg
+    group: tsg
+  register: pg_conf_file
+  notify: relaunch containers
+
+- name: Read existing odoo.conf if exists
+  ansible.builtin.slurp:
+    src: "{{ odoo_path }}/config/odoo.conf"
+  register: existing_odoo_conf
   ignore_errors: yes
+
+- name: Extract existing admin_passwd
+  set_fact:
+    existing_admin_passwd: >-
+      {{
+        (existing_odoo_conf.content | b64decode)
+        | regex_search('admin_passwd\s*=\s*(.+)', '\1')
+        | first | default('')
+      }}
+  when: existing_odoo_conf is not failed
+  ignore_errors: yes
+  register: existing_admin_passwd_extracted
+
+- name: Generate hashed master password
+  ansible.builtin.command:
+    cmd: python3 -c "from passlib.hash import pbkdf2_sha512; print(pbkdf2_sha512.hash('{{ initial_db_master_pass }}'))"
+  register: hashed_master_password
+  changed_when: false
+  delegate_to: localhost
+  become: false
+
+- name: Create odoo.conf file from template
+  template:
+    src: odoo.conf.j2
+    dest: "{{ odoo_path }}/config/odoo.conf"
+    mode: '0644'
+    owner: tsg
+    group: tsg
+  register: odoo_conf_file
+  notify: relaunch containers
 
 - name: Initialize addon map
   set_fact:
@@ -125,6 +178,8 @@
     dest: "{{ odoo_path }}/addons/"
     delete: no
     recursive: yes
+    rsync_opts:
+      - "--chown=tsg:tsg"
   loop: "{{ git_clone_results.results }}"
   loop_control:
     label: "{{ item.item.key }}"
@@ -233,6 +288,8 @@
     path: "{{ odoo_path }}/addons/base_addons_list/"
     state: directory
     mode: '0755'
+    owner: tsg
+    group: tsg
   when: base_addons | default([]) | length > 0
 
 - name: Create the __init__.py file for the list of base addons to be installed
@@ -240,6 +297,8 @@
     path: "{{ odoo_path }}/addons/base_addons_list/__init__.py"
     state: touch
     mode: '0644'
+    owner: tsg
+    group: tsg
   when: base_addons | default([]) | length > 0
 
 - name: Create the manifest file for the list of base addons to be installed
@@ -247,18 +306,9 @@
     src: __manifest__.py.j2
     dest: "{{ odoo_path }}/addons/base_addons_list/__manifest__.py"
     mode: '0644'
+    owner: tsg
+    group: tsg
   when: base_addons | default([]) | length > 0
-
-# Todo: figure out proper permissions for these directories
-- name: Set 777 permissions recursively on Odoo writable directories
-  file:
-    path: "{{ odoo_path }}/{{ item }}"
-    mode: '0777'
-    recurse: yes
-  loop:
-    - addons
-    - cache
-    - config
 
 - name: Obtain container info
   community.docker.docker_container_info:

@@ -19,6 +19,11 @@ keyed_groups:
 # Custom fields
 compose:
   ansible_host: primary_ip4.address.split('/')[0]
+  ### VM configurations ###
+  vcpus: vcpus
+  memory: memory
+  disk: disk
+  ### Odoo configurations ###
   compose_project_name: custom_fields.compose_project_name
   deployment_target: custom_fields.deployment_target
   odoo_version: custom_fields.odoo_version
