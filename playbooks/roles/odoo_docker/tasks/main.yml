@@ -53,6 +53,22 @@
   register: env_file
   notify: relaunch containers
 
+- name: Create postgres.conf file from template
+  template:
+    src: postgres.conf.j2
+    dest: "{{ odoo_path }}/config/postgres.conf"
+    mode: '0644'
+  register: pg_conf_file
+  notify: relaunch containers
+
+- name: Create odoo.conf file from template
+  template:
+    src: odoo.conf.j2
+    dest: "{{ odoo_path }}/config/odoo.conf"
+    mode: '0644'
+  register: odoo_conf_file
+  notify: relaunch containers
+
 - name: Configure containers to use available resources
   command:
     chdir: "{{ odoo_path }}"

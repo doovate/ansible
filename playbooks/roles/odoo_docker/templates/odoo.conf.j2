@@ -1,3 +1,9 @@
+{% set odoo_ram = (memory | default(2500) | int * 1024 * 1024 * 0.65) | int %}
+{% set workers = (vcpus | default(1) | int * 2) %}
+{% set max_cron_threads = 1 %}
+{% set limit_memory_soft = (odoo_ram / (workers + max_cron_threads)) | int %}
+{% set limit_memory_hard = (limit_memory_soft * 1.40) | int %}
+
 [options]
 addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/enterprise
 data_dir = /var/lib/odoo
@@ -26,7 +32,7 @@ list_db = {{ list_db | default('True') }}
 gevent_port = {{ gevent_port | default('8072') }}
 
 ; Set to True when odoo is behind a reverse proxy (e.g., traefik, nginx). Default is False.
-proxy_mode = {{ proxy_mode | default('False') }}
+proxy_mode = {{ proxy_mode | default('True') }}
 
 ; Enable X-Sendfile support to delegate file serving to a web server like NGINX.
 x-sendfile = {{ x_sendfile | default('True') }}
@@ -43,16 +49,16 @@ log_db = {{ log_db | default('False') }}
 ; Number of worker processes. If set to 0, odoo runs in multi-threaded mode (not recommended for production).
 ; For production environments, set workers > 0 to enable multi-processing.
 ; Formula: workers = (CPU cores * 2) + 1
-workers = {{ workers | default('2') }}
+workers = {{ workers }}
 
 ; Maximum number of threads processing cron jobs. Default is 2. Adjust based on the number of workers and expected cron load.
 max_cron_threads = {{ max_cron_threads | default('2') }}
 
 ; Hard limit for virtual memory per worker (in bytes). If a worker exceeds this limit, it will be killed immediately. Default is 2684354560 bytes (2.5 GB).
-limit_memory_hard = {{ limit_memory_hard | default('2684354560') }}
+limit_memory_hard = {{ limit_memory_hard }}
 
 ; Soft limit for virtual memory per worker (in bytes). If a worker exceeds this limit, it will be recycled after the current request. Default is 2147483648 bytes (2 GB).
-limit_memory_soft = {{ limit_memory_soft | default('2147483648') }}
+limit_memory_soft = {{ limit_memory_soft }}
 
 ; Limit the maximum number of requests a worker can process before being recycled. Default is 8192.
 limit_request = {{ limit_request | default('8192') }}
