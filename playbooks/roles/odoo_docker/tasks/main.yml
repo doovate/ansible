@@ -95,19 +95,22 @@
   ignore_errors: yes
   register: existing_admin_passwd_extracted
 
-- name: Generate hashed master password
-  ansible.builtin.command:
-    cmd: >-
-      python3 -c "
-      import hashlib, os, base64;
-      salt = os.urandom(16);
-      dk = hashlib.pbkdf2_hmac('sha512', b'{{ initial_db_master_pass }}', salt, 25000);
-      print('$pbkdf2-sha512$25000$' + base64.b64encode(salt).decode() + '$' + base64.b64encode(dk).decode())
-      "
-  register: hashed_master_password
-  changed_when: false
+- name: Ensure passlib is installed on Ansible controller
+  pip:
+    name: passlib
+    state: present
+    break_system_packages: true
   delegate_to: localhost
-  when: existing_admin_passwd_extracted.failed | default(true)
+  run_once: true
+
+- name: Ensure passlib is installed on Ansible controller
+  pip:
+    name: passlib
+    state: present
+    break_system_packages: true
+  delegate_to: localhost
+  run_once: true
+
 
 - name: Create odoo.conf file from template
   template:
