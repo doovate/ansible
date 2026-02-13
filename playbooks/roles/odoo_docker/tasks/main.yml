@@ -36,8 +36,6 @@
     dest: "{{ odoo_path }}"
     delete: no
     recursive: yes
-#    owner: yes
-#    group: yes
     rsync_opts:
       - "--chown=tsg:tsg" # Forces the owner and group of the files to be changed to the user and group specified.
   delegate_to: "{{ inventory_hostname }}"
