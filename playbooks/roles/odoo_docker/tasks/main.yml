@@ -111,6 +111,9 @@
   register: hashed_master_password
   changed_when: false
   delegate_to: localhost
+  when:
+    - initial_db_master_pass | default('') != ''
+    - existing_admin_passwd == ''
   become: false
 
 - name: Create odoo.conf file from template
