@@ -3,83 +3,30 @@
 {% set max_cron_threads = 1 %}
 {% set limit_memory_soft = (odoo_ram / (workers + max_cron_threads)) | int %}
 {% set limit_memory_hard = (limit_memory_soft * 1.40) | int %}
-
 [options]
 addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/enterprise
 data_dir = /var/lib/odoo
-; Name of the database to connect to. If not set, odoo the database selector will display at startup | eg: db_name = master
 db_name = {{ db_name | default('False') }}
-; Template used for creating new databases. Default is 'template1'.
 db_template = {{ db_template | default('template1') }}
-; Database filtering using regular expressions. This limits the databases accessible by odoo, useful for multi-database setups.
-; Variables:
-;   %h: Hostname
-;   %d: Domain name
-;   %i: IP address
-; Examples:
-;   dbfilter = ^%h$       ; Matches databases named after the hostname.
-;   dbfilter = ^odoo_%d$  ; Matches databases starting with 'odoo_' followed by the domain.
 dbfilter = {{ dbfilter | default('.*') }}
-
 syslog = {{ syslog | default('False') }}
-
-; Maximum number of physical connections to the database.Default is 64
 db_maxconn = {{ db_maxconn | default('32') }}
-; Allow the database manager to list databases. Set to False to disable listing databases. Default is True.
 list_db = {{ list_db | default('True') }}
-
-; Port for longpolling connections, used for chat, notifications, and live updates. Default port is 8072.
 gevent_port = {{ gevent_port | default('8072') }}
-
-; Set to True when odoo is behind a reverse proxy (e.g., traefik, nginx). Default is False.
 proxy_mode = {{ proxy_mode | default('True') }}
-
-; Enable X-Sendfile support to delegate file serving to a web server like NGINX.
 x-sendfile = {{ x_sendfile | default('True') }}
-
-; Log level, possible values: debug, info, warning, error, critical. Default is 'info'.
 log_level = {{ log_level | default('info') }}
-
-; The log file path. If not set, logs are output to stdout. Set to 'None' to disable file logging.
 logfile = {{ logfile | default('None') }}
-
-; Log to the database. When set to True, logs are stored in the database table 'ir.logging'. May impact performance.
 log_db = {{ log_db | default('False') }}
-
-; Number of worker processes. If set to 0, odoo runs in multi-threaded mode (not recommended for production).
-; For production environments, set workers > 0 to enable multi-processing.
-; Formula: workers = (CPU cores * 2) + 1
 workers = {{ workers }}
-
-; Maximum number of threads processing cron jobs. Default is 2. Adjust based on the number of workers and expected cron load.
 max_cron_threads = {{ max_cron_threads | default('2') }}
-
-; Hard limit for virtual memory per worker (in bytes). If a worker exceeds this limit, it will be killed immediately. Default is 2684354560 bytes (2.5 GB).
 limit_memory_hard = {{ limit_memory_hard }}
-
-; Soft limit for virtual memory per worker (in bytes). If a worker exceeds this limit, it will be recycled after the current request. Default is 2147483648 bytes (2 GB).
 limit_memory_soft = {{ limit_memory_soft }}
-
-; Limit the maximum number of requests a worker can process before being recycled. Default is 8192.
 limit_request = {{ limit_request | default('8192') }}
-
-; Limit the maximum CPU time (in seconds) per request. Default is 60 seconds.
 limit_time_cpu = {{ limit_time_cpu | default('60') }}
-
-; Limit the maximum real time (in seconds) per request. Default is 120 seconds.
 limit_time_real = {{ limit_time_real | default('120') }}
-
-; Limit the maximum age (in hours) of records kept in virtual memory tables. Default is 1.0 hour.
 osv_memory_age_limit = {{ osv_memory_age_limit | default('1.0') }}
-
-; Limit the maximum number of records kept in virtual memory tables. Default is False (no limit). Set to an integer to enforce a limit.
 osv_memory_count_limit = {{ osv_memory_count_limit | default('False') }}
-
-; Enable debug mode. Set to True for debugging purposes. Default is False.
 debug_mode = {{ debug_mode | default('False') }}
-
-; The separator used for CSV import/export. Default is ','.
 csv_internal_sep = {{ csv_internal_sep | default(',') }}
-
-; Admin_passwd
 admin_passwd = {{ existing_admin_passwd | default('') }}
