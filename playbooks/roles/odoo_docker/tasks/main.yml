@@ -69,13 +69,6 @@
   register: odoo_conf_file
   notify: relaunch containers
 
-- name: Configure containers to use available resources
-  command:
-    chdir: "{{ odoo_path }}"
-    cmd: "{{ docker_launcher }} config auto-config"
-  when: git_output.changed or env_file.changed
-  ignore_errors: yes
-
 - name: Initialize addon map
   set_fact:
     selected_addon_map: { }
