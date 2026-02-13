@@ -117,7 +117,7 @@
   template:
     src: odoo.conf.j2
     dest: "{{ odoo_path }}/config/odoo.conf"
-    mode: '0777'
+    mode: '0644'
     owner: tsg
     group: tsg
   register: odoo_conf_file
