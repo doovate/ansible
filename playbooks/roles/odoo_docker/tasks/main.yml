@@ -92,6 +92,7 @@
         | first | default('')
       }}
   when: existing_odoo_conf is not failed
+  ignore_errors: yes
 
 - name: Create odoo.conf file from template
   template:
