@@ -16,14 +16,25 @@
     state: latest
     break_system_packages: true
 
-- name: Clone Odoo repository
+- name: Clone repo to temporary location
   ansible.builtin.git:
     repo: https://github.com/doovate-beta/dv-odoo-docker.git
-    dest: "{{ odoo_path }}"
+    dest: /tmp/docker_repo_tmp
     depth: 1
     version: main
-#    force: yes
+    force: yes
   register: git_updated
+
+- name: Sync files to production directory
+  ansible.builtin.synchronize:
+    src: /tmp/docker_repo_tmp/
+    dest: "{{ odoo_path }}"
+    delete: no
+    recursive: yes
+  delegate_to: "{{ inventory_hostname }}"
+  when: git_updated.changed
+  register: git_output
+  notify: relaunch containers
 
 - name: Create the necessary directories for the Odoo docker containers
   file:
