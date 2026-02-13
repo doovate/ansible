@@ -29,5 +29,7 @@ osv_memory_age_limit = {{ osv_memory_age_limit | default('1.0') }}
 osv_memory_count_limit = {{ osv_memory_count_limit | default('False') }}
 debug_mode = {{ debug_mode | default('False') }}
 csv_internal_sep = {{ csv_internal_sep | default(',') }}
-admin_passwd = {{ existing_admin_passwd | default('') }}
+{% if existing_admin_passwd | default('') %}
+    admin_passwd = {{ existing_admin_passwd }}
+{% endif %}
 

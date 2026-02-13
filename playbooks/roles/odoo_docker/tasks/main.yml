@@ -25,6 +25,11 @@
     force: yes
   register: git_updated
 
+- name: Check that the Odoo folder exists
+  stat:
+    path: "{{ odoo_path }}"
+  register: odoo_folder_exists
+
 - name: Sync files to production directory
   ansible.builtin.synchronize:
     src: /tmp/docker_repo_tmp/
@@ -32,7 +37,7 @@
     delete: no
     recursive: yes
   delegate_to: "{{ inventory_hostname }}"
-  when: git_updated.changed
+  when: git_updated.changed or odoo_folder_exists.stat.exists
   register: git_output
   notify: relaunch containers
 
