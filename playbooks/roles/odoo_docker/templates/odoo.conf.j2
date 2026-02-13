@@ -32,7 +32,7 @@ csv_internal_sep = {{ csv_internal_sep | default(',') }}
 {% if existing_admin_passwd | default('') %}
     admin_passwd = {{ existing_admin_passwd }}
 {% else %}
-    admin_passwd = {{ master_password_hash }}
+    admin_passwd = {{ hashed_master_password }}
 {% endif %}
 
 
