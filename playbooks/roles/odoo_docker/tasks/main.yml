@@ -36,6 +36,10 @@
     dest: "{{ odoo_path }}"
     delete: no
     recursive: yes
+#    owner: yes
+#    group: yes
+    rsync_opts:
+      - "--chown=tsg:tsg" # Forces the owner and group of the files to be changed to the user and group specified.
   delegate_to: "{{ inventory_hostname }}"
   when: git_updated.changed or not odoo_folder_exists.stat.exists
   register: git_output
@@ -46,6 +50,8 @@
     path: "{{ odoo_path }}/{{ item }}"
     state: directory
     mode: '0755'
+    owner: tsg
+    group: tsg
   loop:
     - addons
     - cache
@@ -56,7 +62,9 @@
     content: ""
     dest: "{{ odoo_path }}/{{ item }}"
     force: no
-    mode: '0755'
+    mode: '0644'
+    owner: tsg
+    group: tsg
   loop:
     - cache/addons_cache.json
     - addons/requirements.txt
@@ -66,6 +74,8 @@
     src: odoo.env.j2
     dest: "{{ odoo_path }}/.env"
     mode: '0644'
+    owner: tsg
+    group: tsg
   register: env_file
   notify: relaunch containers
 
@@ -74,6 +84,8 @@
     src: postgresql.conf.j2
     dest: "{{ odoo_path }}/config/postgresql.conf"
     mode: '0644'
+    owner: tsg
+    group: tsg
   register: pg_conf_file
   notify: relaunch containers
 
@@ -108,6 +120,8 @@
     src: odoo.conf.j2
     dest: "{{ odoo_path }}/config/odoo.conf"
     mode: '0777'
+    owner: tsg
+    group: tsg
   register: odoo_conf_file
   notify: relaunch containers
 
@@ -166,6 +180,8 @@
     dest: "{{ odoo_path }}/addons/"
     delete: no
     recursive: yes
+    rsync_opts:
+      - "--chown=tsg:tsg"
   loop: "{{ git_clone_results.results }}"
   loop_control:
     label: "{{ item.item.key }}"
@@ -274,6 +290,8 @@
     path: "{{ odoo_path }}/addons/base_addons_list/"
     state: directory
     mode: '0755'
+    owner: tsg
+    group: tsg
   when: base_addons | default([]) | length > 0
 
 - name: Create the __init__.py file for the list of base addons to be installed
@@ -281,6 +299,8 @@
     path: "{{ odoo_path }}/addons/base_addons_list/__init__.py"
     state: touch
     mode: '0644'
+    owner: tsg
+    group: tsg
   when: base_addons | default([]) | length > 0
 
 - name: Create the manifest file for the list of base addons to be installed
@@ -288,6 +308,8 @@
     src: __manifest__.py.j2
     dest: "{{ odoo_path }}/addons/base_addons_list/__manifest__.py"
     mode: '0644'
+    owner: tsg
+    group: tsg
   when: base_addons | default([]) | length > 0
 
 - name: Obtain container info
