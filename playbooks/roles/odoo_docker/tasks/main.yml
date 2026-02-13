@@ -101,6 +101,7 @@
   register: hashed_master_password
   changed_when: false
   delegate_to: localhost
+  become: false
 
 - name: Create odoo.conf file from template
   template:
