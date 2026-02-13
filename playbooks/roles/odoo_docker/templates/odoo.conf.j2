@@ -82,4 +82,4 @@ debug_mode = {{ debug_mode | default('False') }}
 csv_internal_sep = {{ csv_internal_sep | default(',') }}
 
 ; Set the admin password
-admin_passwd = {{ lookup('pipe', 'python3 -c "from passlib.hash import pbkdf2_sha512; print(pbkdf2_sha512.hash(\"' + INITIAL_DB_MASTER_PASS + '\"))"') }}
+admin_passwd = {{ lookup('pipe', 'python3 -c "from passlib.hash import pbkdf2_sha512; print(pbkdf2_sha512.hash(\"' + initial_db_master_pass + '\"))"') }}
