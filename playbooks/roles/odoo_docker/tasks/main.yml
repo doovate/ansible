@@ -103,13 +103,13 @@
   delegate_to: localhost
   run_once: true
 
-- name: Ensure passlib is installed on Ansible controller
-  pip:
-    name: passlib
-    state: present
-    break_system_packages: true
+- name: Generate hashed master password
+  ansible.builtin.command:
+    cmd: python3 -c "from passlib.hash import pbkdf2_sha512; print(pbkdf2_sha512.hash('{{ master_password }}'))"
+  register: hashed_master_password
+  changed_when: false
   delegate_to: localhost
-  run_once: true
+
 
 
 - name: Create odoo.conf file from template
