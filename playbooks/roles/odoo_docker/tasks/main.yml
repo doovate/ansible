@@ -72,6 +72,22 @@
   register: pg_conf_file
   notify: relaunch containers
 
+- name: Read existing odoo.conf if exists
+  ansible.builtin.slurp:
+    src: "{{ odoo_path }}/config/odoo.conf"
+  register: existing_odoo_conf
+  ignore_errors: yes
+
+- name: Extract existing admin_passwd
+  set_fact:
+    existing_admin_passwd: >-
+      {{
+        (existing_odoo_conf.content | b64decode)
+        | regex_search('admin_passwd\s*=\s*(.+)', '\1')
+        | first | default('')
+      }}
+  when: existing_odoo_conf is not failed
+
 - name: Create odoo.conf file from template
   template:
     src: odoo.conf.j2
