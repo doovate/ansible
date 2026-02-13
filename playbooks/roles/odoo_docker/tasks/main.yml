@@ -16,20 +16,20 @@
     state: latest
     break_system_packages: true
 
-- name: Clone repo to temporary location
+- name: Clone Odoo repository
   ansible.builtin.git:
     repo: https://github.com/doovate-beta/dv-odoo-docker.git
     dest: "{{ odoo_path }}"
     depth: 1
     version: main
-    force: yes
+#    force: yes
   register: git_updated
 
 - name: Create the necessary directories for the Odoo docker containers
   file:
     path: "{{ odoo_path }}/{{ item }}"
     state: directory
-    mode: '0777'
+    mode: '0755'
   loop:
     - addons
     - cache
@@ -65,7 +65,7 @@
   template:
     src: odoo.conf.j2
     dest: "{{ odoo_path }}/config/odoo.conf"
-    mode: '0644'
+    mode: '0777'
   register: odoo_conf_file
   notify: relaunch containers
 
@@ -247,17 +247,6 @@
     dest: "{{ odoo_path }}/addons/base_addons_list/__manifest__.py"
     mode: '0644'
   when: base_addons | default([]) | length > 0
-
-# Todo: figure out proper permissions for these directories
-- name: Set 777 permissions recursively on Odoo writable directories
-  file:
-    path: "{{ odoo_path }}/{{ item }}"
-    mode: '0777'
-    recurse: yes
-  loop:
-    - addons
-    - cache
-    - config
 
 - name: Obtain container info
   community.docker.docker_container_info:
