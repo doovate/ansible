@@ -37,7 +37,7 @@
     delete: no
     recursive: yes
   delegate_to: "{{ inventory_hostname }}"
-  when: git_updated.changed or odoo_folder_exists.stat.exists
+  when: git_updated.changed or not odoo_folder_exists.stat.exists
   register: git_output
   notify: relaunch containers
 
