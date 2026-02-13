@@ -53,10 +53,10 @@
   register: env_file
   notify: relaunch containers
 
-- name: Create postgres.conf file from template
+- name: Create postgresql.conf file from template
   template:
-    src: postgres.conf.j2
-    dest: "{{ odoo_path }}/config/postgres.conf"
+    src: postgresql.conf.j2
+    dest: "{{ odoo_path }}/config/postgresql.conf"
     mode: '0644'
   register: pg_conf_file
   notify: relaunch containers
