@@ -5,4 +5,4 @@
   register: output
 
 - debug:
-    var: output.stdout_lines
+    var: output.stderr_lines
