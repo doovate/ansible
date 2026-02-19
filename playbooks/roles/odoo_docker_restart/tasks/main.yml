@@ -3,6 +3,13 @@
   args:
     chdir: /opt/odoo
   register: output
+  failed_when: false
 
-- debug:
+- name: Show output
+  debug:
     var: output.stderr_lines
+
+- name: Fail if FAILURE LOGS detected
+  ansible.builtin.fail:
+    msg: "Launcher failed with rc={{ output.rc }}"
+  when: "'FAILURE LOGS' in output.stderr or output.rc != 0"
