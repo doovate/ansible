@@ -113,7 +113,7 @@
   delegate_to: localhost
   when:
     - initial_db_master_pass | default('') != ''
-    - existing_admin_passwd == ''
+    - existing_admin_passwd | default('') == ''
   become: false
 
 - name: Create odoo.conf file from template
