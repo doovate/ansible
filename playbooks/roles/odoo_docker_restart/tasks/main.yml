@@ -3,13 +3,5 @@
   args:
     chdir: /opt/odoo
   register: dv_output
-
-- name: Show dv-launcher output
   debug:
-    msg: |
-      STDOUT:
-      {{ dv_output.stdout_lines | join('\n') }}
-      
-      STDERR:
-      {{ dv_output.stderr }}
-
+    var: dv_output.stdout_lines
