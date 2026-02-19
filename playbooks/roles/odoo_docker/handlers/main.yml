@@ -1,19 +1,18 @@
 - name: relaunch containers
-  block:
-    - name: Run launcher
-      command:
-        chdir: "{{ odoo_path }}"
-        cmd: "{{ docker_launcher }} --no-color"
-      register: docker_output
-      failed_when: false
-
-    - name: Show output
-      debug:
-        var: docker_output.stderr_lines
-
-    - name: Fail if error detected
-      ansible.builtin.fail:
-        msg: "Launcher failed, see output above."
-      when: docker_output.rc != 0 or 'FAILURE LOGS' in docker_output.stderr
+  command:
+    chdir: "{{ odoo_path }}"
+    cmd: "{{ docker_launcher }} --no-color"
+  register: docker_output
+  failed_when: false
   listen: restart docker service
 
+- name: Show docker output
+  debug:
+    var: docker_output.stderr_lines
+  listen: restart docker service
+
+- name: Fail if error detected
+  ansible.builtin.fail:
+    msg: "Launcher failed, see output above."
+  when: docker_output.rc != 0 or 'FAILURE LOGS' in docker_output.stderr
+  listen: restart docker service
