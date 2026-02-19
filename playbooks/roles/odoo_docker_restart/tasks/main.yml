@@ -5,11 +5,12 @@
   register: output
   failed_when: false
 
-- name: Show output
+- name: Show output (success)
   debug:
     var: output.stderr_lines
+  when: "'FAILURE LOGS' not in output.stderr and output.rc == 0"
 
-- name: Fail if FAILURE LOGS detected
+- name: Show output (failed)
   ansible.builtin.fail:
-    msg: "Launcher failed with rc={{ output.rc }}"
+    msg: "{{ output.stderr_lines }}"
   when: "'FAILURE LOGS' in output.stderr or output.rc != 0"
