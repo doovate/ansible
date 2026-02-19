@@ -1,5 +1,5 @@
 - name: Relaunch containers
-  command: dv-launcher
+  command: dv-launcher --no-color
   args:
     chdir: /opt/odoo
   register: dv_output
