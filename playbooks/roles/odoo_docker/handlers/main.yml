@@ -1,6 +1,13 @@
 - name: relaunch containers
   command:
     chdir: "{{ odoo_path }}"
-    cmd: "{{ docker_launcher }}"
+    cmd: "{{ docker_launcher }} --no-color"
+  register: docker_output
   ignore_errors: yes
+  listen: restart docker service
+
+- name: Show docker output if failed
+  ansible.builtin.debug:
+    msg: "{{ docker_output.stdout }}\n{{ docker_output.stderr }}"
+  when: docker_output.rc != 0 or 'FAILURE LOGS' in docker_output.stdout
   listen: restart docker service
