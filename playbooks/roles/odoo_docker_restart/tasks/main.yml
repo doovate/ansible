@@ -2,3 +2,7 @@
   command: dv-launcher --no-color
   args:
     chdir: /opt/odoo
+  register: output
+
+- debug:
+    var: output.stdout_lines
