@@ -1,0 +1,92 @@
+- name: Execute OpenTofu from Ansible
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    tf_dir: "../odoo"
+    host:
+    vmid:
+
+  tasks:
+    - name: Check if OpenTofu exists
+      ansible.builtin.command: tofu version
+      register: tf_version
+      changed_when: false
+
+    - name: Delete credentials.auto.tfvars if it exists
+      ansible.builtin.file:
+        path: "{{ tf_dir }}/credentials.auto.tfvars"
+        state: absent
+
+    - name: Generate variables file
+      ansible.builtin.copy:
+        content: |
+          hostname = "{{ host }}"
+        dest: "{{ tf_dir }}/terraform.tfvars"
+        mode: '0644'
+
+    - name: Tofu init
+      ansible.builtin.command: >
+        tofu init -input=false -reconfigure
+      args:
+        chdir: "{{ tf_dir }}"
+
+    - name: Check if VM is already in tfstate
+      ansible.builtin.command: >
+        tofu state show proxmox_vm_qemu.vm
+      args:
+        chdir: "{{ tf_dir }}"
+      register: tf_state_check
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if VM is not in tfstate and vmid is not set
+      ansible.builtin.fail:
+        msg: "The VM doesn't have a tfstate and vmid wans't provided. Please provide vmid to import the VM."
+      when: tf_state_check.rc != 0 and (vmid is not defined or vmid | string | trim == '')
+
+    - name: Fail if vmid is not a number
+      ansible.builtin.fail:
+        msg: "The vmid '{{ vmid }}' is not valid. It must be an integer (e.g: 100, 200)."
+      when: tf_state_check.rc != 0 and vmid | string | trim != '' and vmid | string is not match('^\d+$')
+
+    - name: Import VM if not in tfstate
+      ansible.builtin.command: >
+        tofu import -input=false -no-color
+        proxmox_vm_qemu.vm
+        {{ host }}/qemu/{{ vmid }}
+      args:
+        chdir: "{{ tf_dir }}"
+      when: tf_state_check.rc != 0 and vmid | string != ''
+      register: tf_import_vm
+
+    - name: Stop after importing the VM
+      ansible.builtin.fail:
+        msg: >
+          VM importada correctamente. Revisa el tfstate con 'tofu state show proxmox_vm_qemu.vm'
+          y asegúrate de que el .tf coincide con la VM real antes de continuar.
+          Una vez revisado, vuelve a ejecutar sin pasar vmid para continuar con el apply.
+      when: tf_import_vm is changed
+
+    - name: Tofu plan
+      ansible.builtin.command: >
+        tofu plan -input=false -no-color
+      args:
+        chdir: "{{ tf_dir }}"
+
+    - name: Show Tofu outputs
+      ansible.builtin.command: >
+        tofu output -json
+      args:
+        chdir: "{{ tf_dir }}"
+      register: tf_outputs
+
+    - name: Display outputs
+      ansible.builtin.debug:
+        msg: "{{ tf_outputs.stdout | from_json }}"
+
+    - name: Tofu apply
+      ansible.builtin.command: >
+        tofu apply -input=false -auto-approve -no-color
+      args:
+        chdir: "{{ tf_dir }}"
