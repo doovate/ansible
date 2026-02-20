@@ -1,8 +1,9 @@
 plugin: netbox.netbox.nb_inventory
 api_endpoint: http://192.168.24.55:9100
-token: afce2096a1a4ba342c98d579fac45f9befe83461
+#token: afce2096a1a4ba342c98d579fac45f9befe83461
 validate_certs: False
 config_context: False
+token: afce2096a1a4ba342c98d579fac45f9befe83461
 
 
 group_by:
