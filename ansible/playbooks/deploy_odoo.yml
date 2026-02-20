@@ -12,6 +12,11 @@
 - name: Deploy and configure a set of Odoo containers
   hosts: "device_roles_odoo:&prod"
   become: true
+  pre_tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        timeout: 120
 
   roles:
     - docker

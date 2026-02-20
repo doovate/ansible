@@ -1,17 +1,6 @@
 - name: Provision infrastructure
   import_playbook: provision_odoo.yml
 
-- name: Wait for VM to be ready
-  hosts: localhost
-  gather_facts: false
-  tasks:
-    - name: Wait for SSH
-      ansible.builtin.wait_for:
-        host: "{{ ansible_host }}"
-        port: 22
-        delay: 10
-        timeout: 120
-        state: started
 
 
 - name: Deploy Odoo
