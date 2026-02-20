@@ -1,0 +1,5 @@
+detectors:
+  - name: detect_token
+    keywords: [token]
+    regex:
+      token: '(?im)^\s*token\s*:\s*"?([^"\n#]+?)"?\s*(?:#.*)?$'
