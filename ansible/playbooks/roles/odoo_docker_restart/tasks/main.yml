@@ -1,0 +1,16 @@
+- name: Relaunch containers
+  command: dv-launcher --no-color
+  args:
+    chdir: /opt/odoo
+  register: output
+  failed_when: false
+
+- name: Show output
+  debug:
+    var: output.stderr_lines
+
+- name: Fail if error detected
+  ansible.builtin.fail:
+    msg: "Launcher failed, see output above."
+  when: "'FAILURE LOGS' in output.stderr or output.rc != 0"
+

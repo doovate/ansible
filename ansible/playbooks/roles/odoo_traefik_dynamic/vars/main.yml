@@ -1,0 +1,3 @@
+traefik_host: "{{ groups['device_roles_traefik'] | first }}"
+#local_dynamic_dir: "{{ playbook_dir }}/generated_dynamic"
+local_dynamic_dir: "/opt/ansible/tmp/generated_dynamic"

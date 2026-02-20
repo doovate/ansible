@@ -1,0 +1,90 @@
+- name: Make sure necessary packages are installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop:
+    - pip
+
+- name: Ensure loki external network exists
+  community.docker.docker_network:
+    name: loki
+
+- name: Clone repo to temporary location
+  ansible.builtin.git:
+    repo: "{{ repo }}"
+    dest: /tmp/docker_repo_tmp
+    version: main
+    force: yes
+  register: git_updated
+
+- name: Create the necessary directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ install_dir }}"
+    - "{{ install_dir }}/grafana"
+    - "{{ install_dir }}/loki"
+    - "{{ install_dir }}/promtail"
+
+- name: Sync files from repo to install directory
+  ansible.builtin.synchronize:
+    src: /tmp/docker_repo_tmp/
+    dest: "{{ install_dir }}"
+    delete: no
+    recursive: yes
+  delegate_to: "{{ inventory_hostname }}"
+  when: git_updated.changed
+  register: copy_repo
+  notify: restart grafana
+
+- name: Set correct ownership for grafana directory (user 1000)
+  file:
+    path: "{{ install_dir }}/grafana"
+    owner: "1000"
+    group: "1000"
+    mode: '0755'
+    recurse: yes
+
+- name: Set correct ownership for loki directory (root by default)
+  file:
+    path: "{{ install_dir }}/loki"
+    owner: root
+    group: root
+    mode: '0755'
+    recurse: yes
+
+- name: Set correct ownership for promtail directory (root by default)
+  file:
+    path: "{{ install_dir }}/promtail"
+    owner: root
+    group: root
+    mode: '0755'
+    recurse: yes
+
+- name: Obtain container info
+  community.docker.docker_container_info:
+    name: "{{ item }}"
+  loop:
+    - loki
+    - promtail
+    - grafana
+  register: container_info
+  ignore_errors: yes
+
+- name: Check if any container is down or missing
+  ansible.builtin.set_fact:
+    containers_stopped: true
+  when: >
+    (container_info.results | selectattr('exists', 'equalto', false) | list | length > 0)
+    or
+    (container_info.results | selectattr('exists', 'equalto', true) | selectattr('container.State.Running', 'equalto', false) | list | length > 0)
+
+- name: Notify to relaunch if needed
+  debug:
+    msg: "Containers need to be relaunched"
+  when: containers_stopped | default(false)
+  changed_when: containers_stopped | default(false)
+  notify: restart grafana

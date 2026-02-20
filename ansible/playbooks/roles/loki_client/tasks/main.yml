@@ -1,0 +1,12 @@
+- name: Install Loki driver plugin for Docker
+  community.docker.docker_plugin:
+    plugin_name: grafana/loki-docker-driver:latest
+    alias: loki
+    state: enable
+
+- name: Configure Docker daemon to use Loki driver
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    mode: '0644'
+  notify: restart docker service

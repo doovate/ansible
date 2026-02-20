@@ -1,0 +1,7 @@
+http:
+  routers:
+    myservice:
+      rule: "Host(`{{ domain }}`)"
+      middlewares:
+        - internal-only
+      service: traefik-service

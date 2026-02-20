@@ -1,0 +1,2 @@
+traefik_repo: https://github.com/doovate-beta/dv-traefik-docker.git
+ip_range: 192.168.24.0/22

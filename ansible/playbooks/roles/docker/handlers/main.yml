@@ -1,0 +1,6 @@
+- name: restart docker
+  service:
+    name: docker
+    state: restarted
+  # Shared label so other roles can call this
+  listen: restart docker service

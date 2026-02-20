@@ -1,0 +1,73 @@
+- name: Make sure necessary packages are installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop:
+    - pip
+
+- name: Ensure traefik external network exists
+  community.docker.docker_network:
+    name: traefik
+
+- name: Clone repo to temporary location
+  ansible.builtin.git:
+    repo: "{{ traefik_repo }}"
+    dest: /tmp/docker_repo_tmp
+    version: main
+    force: yes
+  register: git_updated
+
+- name: Sync files to traefik directory
+  ansible.builtin.synchronize:
+    src: /tmp/docker_repo_tmp/
+    dest: /opt/traefik/
+    delete: no
+    recursive: yes
+  delegate_to: "{{ inventory_hostname }}"
+  when: git_updated.changed
+  register: copy_repo
+  notify: restart traefik
+
+- name: Create the necessary directories for the traefik docker containers
+  file:
+    path: /opt/traefik/{{ item }}
+    state: directory
+  loop:
+    - letsencrypt
+    - config/dynamic
+
+- name: Create the necessary files for the traefik docker containers
+  copy:
+    content: "{}"
+    dest: /opt/traefik/letsencrypt/acme.json
+    force: no
+    mode: '0600'
+
+- name: Ensure correct permissions and ownership for acme.json
+  file:
+    path: /opt/traefik/letsencrypt/acme.json
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Obtain container info
+  community.docker.docker_container_info:
+    name: traefik
+  register: container_info
+  ignore_errors: yes
+
+- name: Check if container is down or missing
+  ansible.builtin.set_fact:
+    containers_stopped: true
+  when: >
+    not container_info.exists
+    or
+    not container_info.container.State.Running
+
+- name: Notify to relaunch if needed
+  debug:
+    msg: "Container needs to be relaunched"
+  when: containers_stopped | default(false)
+  changed_when: containers_stopped | default(false)
+  notify: restart traefik

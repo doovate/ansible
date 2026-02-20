@@ -1,0 +1,5 @@
+- name: Install pip
+  apt:
+    name: pip
+    state: latest
+    update_cache: yes

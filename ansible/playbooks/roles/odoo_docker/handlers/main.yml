@@ -1,0 +1,7 @@
+- name: relaunch containers
+  command:
+    chdir: "{{ odoo_path }}"
+    cmd: "{{ docker_launcher }} --no-color"
+  register: docker_output
+  failed_when: docker_output.rc != 0 or 'FAILURE LOGS' in docker_output.stderr
+  listen: restart docker service
