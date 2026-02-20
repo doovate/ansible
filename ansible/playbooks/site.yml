@@ -7,7 +7,7 @@
   tasks:
     - name: Wait for SSH
       ansible.builtin.wait_for:
-        host: "{{ ansible_limit | replace(',localhost', '') | replace('localhost,', '') }}"
+        host: "{{ ansible_host }}"
         port: 22
         delay: 10
         timeout: 120
