@@ -2,3 +2,6 @@
 /.vagrant/
 /tmp/
 /semaphore/
+/tofu/credentials.auto.tfvars
+/tofu/.env
+/tofu/terraform.tfvars

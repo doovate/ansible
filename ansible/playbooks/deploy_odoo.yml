@@ -11,10 +11,16 @@
 
 - name: Deploy and configure a set of Odoo containers
   hosts: "device_roles_odoo:&prod"
-#  vars_files:
-#    - vault.yml
   become: true
+  gather_facts: false
+  pre_tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        delay: 15
+        timeout: 120
 
+    - name: Gather facts
+      ansible.builtin.setup:
   roles:
     - docker
     - install_pip

@@ -1,0 +1,7 @@
+- name: Provision infrastructure
+  import_playbook: provision_odoo.yml
+
+
+
+- name: Deploy Odoo
+  import_playbook: deploy_odoo.yml

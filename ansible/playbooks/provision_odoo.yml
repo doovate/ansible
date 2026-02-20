@@ -1,0 +1,68 @@
+- name: Detect full run
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: assert limit
+      run_once: yes
+      assert:
+        that:
+          - 'ansible_limit is defined'
+          - '(ansible_limit | replace(",localhost", "") | replace("localhost,", "")).split(",") | length == 1'
+        fail_msg: Playbook must be run with a limit for exactly one host (excluding localhost)
+
+
+- name: Execute OpenTofu from Ansible
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    tf_dir: "../../tofu"
+    host: "{{ ansible_limit | replace(',localhost', '') | replace('localhost,', '') }}"
+    vmid:
+
+  tasks:
+    - name: Check if OpenTofu exists
+      ansible.builtin.command: tofu version
+      register: tf_version
+      changed_when: false
+
+    - name: Delete credentials.auto.tfvars if it exists
+      ansible.builtin.file:
+        path: "{{ tf_dir }}/credentials.auto.tfvars"
+        state: absent
+
+    - name: Generate variables file
+      ansible.builtin.copy:
+        content: |
+          hostname = "{{ host }}"
+        dest: "{{ tf_dir }}/terraform.tfvars"
+        mode: '0644'
+
+    - name: Tofu init
+      ansible.builtin.command: >
+        tofu init -input=false -reconfigure
+      args:
+        chdir: "{{ tf_dir }}"
+
+    - name: Tofu plan
+      ansible.builtin.command: >
+        tofu plan -input=false -no-color
+      args:
+        chdir: "{{ tf_dir }}"
+
+    - name: Show Tofu outputs
+      ansible.builtin.command: >
+        tofu output -json
+      args:
+        chdir: "{{ tf_dir }}"
+      register: tf_outputs
+
+    - name: Display outputs
+      ansible.builtin.debug:
+        msg: "{{ tf_outputs.stdout | from_json }}"
+
+    - name: Tofu apply
+      ansible.builtin.command: >
+        tofu apply -input=false -auto-approve -no-color
+      args:
+        chdir: "{{ tf_dir }}"
