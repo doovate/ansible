@@ -1,3 +1,13 @@
+- name: Verify there is connection with Cloudflare API
+  ansible.builtin.uri:
+    url: https://api.cloudflare.com
+    method: GET
+    timeout: 10
+  register: cf_check
+  retries: 5
+  delay: 10
+  until: cf_check.status in [200, 301]
+
 - name: Verify ownership of DNS zones in Cloudflare
   uri:
     url: "https://api.cloudflare.com/client/v4/zones?name={{ item.split('.')[-2:] | join('.') }}"
