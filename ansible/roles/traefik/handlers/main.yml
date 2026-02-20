@@ -1,5 +1,0 @@
-- name: restart traefik
-  shell:
-    cmd: docker compose down && docker compose up -d
-    chdir: /opt/traefik/
-  listen: restart docker service

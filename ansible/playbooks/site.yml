@@ -1,5 +1,13 @@
 - name: Provision infrastructure
   import_playbook: provision_odoo.yml
 
+- name: Wait for the VM to be ready
+  wait_for:
+    port: 22
+    host: '(ansible_limit | replace(",localhost", "") | replace("localhost,", "")).split(",") | length == 1'
+    delay: 10
+    timeout: 120
+    state: started
+
 - name: Deploy Odoo
   import_playbook: deploy_odoo.yml

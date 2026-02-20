@@ -1,4 +1,0 @@
-- name: restart grafana
-  shell:
-    cmd: docker compose down && docker compose up -d
-    chdir: "{{ install_dir }}"
