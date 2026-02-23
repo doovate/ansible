@@ -44,6 +44,15 @@
       args:
         chdir: "{{ tf_dir }}"
 
+    - name: Remove old cloudflare_record.vm_dns from tfstate if it exists
+      ansible.builtin.command: >
+        tofu state rm cloudflare_record.vm_dns
+      args:
+        chdir: "{{ tf_dir }}"
+      register: tf_state_rm_cloudflare
+      failed_when: false
+      changed_when: tf_state_rm_cloudflare.rc == 0
+
     - name: Check if VM is already in tfstate
       ansible.builtin.command: >
         tofu state show proxmox_vm_qemu.vm
