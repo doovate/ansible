@@ -1,46 +1,11 @@
-- name: Make sure necessary packages are installed
-  apt:
-    name: "{{ item }}"
-    state: latest
-    update_cache: yes
-  loop:
-    - libxdamage1
-    - libgbm1
-    - libxkbcommon0
-    - pip
-
-- name: Install the docker launcher from pip
-  pip:
-    name:
-      - "{{ docker_launcher }}"
-    state: latest
-    break_system_packages: true
-
 - name: Clone repo to temporary location
   ansible.builtin.git:
     repo: https://github.com/doovate-beta/dv-odoo-docker.git
-    dest: /tmp/docker_repo_tmp
+    dest: "{{ odoo_path }}"
     depth: 1
     version: main
     force: yes
   register: git_updated
-
-- name: Check that the Odoo folder exists
-  stat:
-    path: "{{ odoo_path }}"
-  register: odoo_folder_exists
-
-- name: Sync files to production directory
-  ansible.builtin.synchronize:
-    src: /tmp/docker_repo_tmp/
-    dest: "{{ odoo_path }}"
-    delete: no
-    recursive: yes
-    rsync_opts:
-      - "--chown=tsg:tsg" # Forces the owner and group of the files to be changed to the user and group specified.
-  delegate_to: "{{ inventory_hostname }}"
-  when: git_updated.changed or not odoo_folder_exists.stat.exists
-  register: git_output
   notify: relaunch containers
 
 - name: Create the necessary directories for the Odoo docker containers
@@ -312,27 +277,3 @@
     owner: tsg
     group: tsg
   when: base_addons | default([]) | length > 0
-
-- name: Obtain container info
-  community.docker.docker_container_info:
-    name: "{{ compose_project_name }}_{{ item }}"
-  loop:
-    - db
-    - odoo
-  register: container_info
-  ignore_errors: yes
-
-- name: Check if any container is down or missing
-  ansible.builtin.set_fact:
-    containers_stopped: true
-  when: >
-    (container_info.results | selectattr('exists', 'equalto', false) | list | length > 0)
-    or
-    (container_info.results | selectattr('exists', 'equalto', true) | selectattr('container.State.Running', 'equalto', false) | list | length > 0)
-
-- name: Notify to relaunch if needed
-  debug:
-    msg: "Containers need to be relaunched"
-  when: containers_stopped | default(false)
-  changed_when: containers_stopped | default(false)
-  notify: relaunch containers
