@@ -93,13 +93,6 @@
         vmid | string is match('^\d+$')
       register: tf_import_vm
 
-    - name: Stop after importing the VM
-      ansible.builtin.fail:
-        msg: >
-          The VM has been imported. Please run the playbook again without the vmid to continue.
-          If the second run (the one without the vmid) fails, this machine will need additional manual intervention, please contact an administrator.
-      when: tf_import_vm is changed
-
     - name: Tofu plan
       ansible.builtin.command: >
         tofu plan -input=false -no-color
@@ -110,7 +103,12 @@
 
     - name: Fail with clean error message
       ansible.builtin.fail:
-        msg: "{{ tf_plan.stderr | regex_findall('Error:.*') | join('\n') }}"
+        msg: >-
+          {% if 'Instance cannot be destroyed' in tf_plan.stderr %}
+          The VM is correctly imported in tfstate, but modifications cannot be applied. This VM will require manual intervention.
+          {% else %}
+          {{ tf_plan.stderr | regex_findall('Error:.*') | join('\n') }}
+          {% endif %}
       when: tf_plan.rc != 0
 
     - name: Show Tofu outputs
