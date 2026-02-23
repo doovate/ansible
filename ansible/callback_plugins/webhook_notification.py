@@ -195,8 +195,7 @@ class CallbackModule(CallbackBase):
 
         # Build notification payload
         payload = {
-            'title': title,
-            'message': message
+            'text': f"*{title}*\n\n{message}"
         }
 
         # Send webhook
