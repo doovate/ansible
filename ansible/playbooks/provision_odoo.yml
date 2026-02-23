@@ -105,6 +105,13 @@
         tofu plan -input=false -no-color
       args:
         chdir: "{{ tf_dir }}"
+      register: tf_plan
+      ignore_errors: true
+
+    - name: Fail with clean error message
+      ansible.builtin.fail:
+        msg: "{{ tf_plan.stderr | regex_findall('Error:.*') | join('\n') }}"
+      when: tf_plan.rc != 0
 
     - name: Show Tofu outputs
       ansible.builtin.command: >
