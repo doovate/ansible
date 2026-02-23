@@ -1,0 +1,23 @@
+- name: Obtain container info
+  community.docker.docker_container_info:
+    name: "{{ compose_project_name }}_{{ item }}"
+  loop:
+    - db
+    - odoo
+  register: container_info
+  ignore_errors: yes
+
+- name: Check if any container is down or missing
+  ansible.builtin.set_fact:
+    containers_stopped: true
+  when: >
+    (container_info.results | selectattr('exists', 'equalto', false) | list | length > 0)
+    or
+    (container_info.results | selectattr('exists', 'equalto', true) | selectattr('container.State.Running', 'equalto', false) | list | length > 0)
+
+- name: Notify to relaunch if needed
+  debug:
+    msg: "Containers need to be relaunched"
+  when: containers_stopped | default(false)
+  changed_when: containers_stopped | default(false)
+  notify: relaunch containers

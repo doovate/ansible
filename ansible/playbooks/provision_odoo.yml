@@ -44,6 +44,62 @@
       args:
         chdir: "{{ tf_dir }}"
 
+    - name: Check if VM is already in tfstate
+      ansible.builtin.command: >
+        tofu state show proxmox_vm_qemu.vm
+      args:
+        chdir: "{{ tf_dir }}"
+      register: tf_state_check
+      failed_when: false
+      changed_when: false
+
+    # If the VM is not in tfstate, we need to verify if it exists in Proxmox, if it exists, we need
+    # to import it into tfstate with its vmid, otherwise we create the VM normally.
+    - name: Get all VMs from node
+      ansible.builtin.uri:
+        url: "https://51.255.93.43:8006/api2/json/nodes/{{ node }}/qemu"
+        method: GET
+        headers:
+          Authorization: "PVEAPIToken={{ lookup('env', 'TF_VAR_proxmox_api_token_secret') }}"
+        validate_certs: false
+      register: all_vms
+      when: tf_state_check.rc != 0
+
+    - name: Find VM by name
+      ansible.builtin.set_fact:
+        found_vm: "{{ all_vms.json.data | selectattr('name', 'equalto', vm_name) | list | first | default(None) }}"
+      when: tf_state_check.rc != 0
+
+    - name: Fail if VM is not in tfstate, and is not already created in Proxmox, and vmid is not set
+      ansible.builtin.fail:
+        msg: "The VM doesn't have a tfstate and vmid isn't valid. Set a valid vmid to import the VM (e.g: 100, 200)."
+      when: >
+        tf_state_check.rc != 0 and
+        found_vm is none and
+        (vmid is not defined or vmid | string | trim == '' or
+        vmid | string is not match('^\d+$'))
+
+    - name: Import VM if not in tfstate, and is not already created in Proxmox, and vmid is set
+      ansible.builtin.command: >
+        tofu import -input=false -no-color
+        proxmox_vm_qemu.vm
+        {{ host }}/qemu/{{ vmid }}
+      args:
+        chdir: "{{ tf_dir }}"
+      when: >
+        tf_state_check.rc != 0 and
+        found_vm is none and
+        vmid is defined and vmid | string | trim != '' and
+        vmid | string is match('^\d+$')
+      register: tf_import_vm
+
+    - name: Stop after importing the VM
+      ansible.builtin.fail:
+        msg: >
+          The VM has been imported. Please run the playbook again without the vmid to continue.
+          If the second run (the one without the vmid) fails, this machine will need additional manual intervention, please contact an administrator.
+      when: tf_import_vm is changed
+
     - name: Tofu plan
       ansible.builtin.command: >
         tofu plan -input=false -no-color

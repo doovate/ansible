@@ -6,6 +6,9 @@
     - docker
     - install_pip
     - cloudflare_dns
-    - odoo_docker
     - loki_client
+    - odoo_docker_install_packages
+    - odoo_docker
+    - odoo_docker_watchdog
+    - odoo_docker_configure_web_base_url
     - odoo_traefik_dynamic

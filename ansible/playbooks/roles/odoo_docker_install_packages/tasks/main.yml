@@ -1,0 +1,17 @@
+- name: Make sure necessary packages are installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop:
+    - libxdamage1
+    - libgbm1
+    - libxkbcommon0
+    - pip
+
+- name: Install the docker launcher from pip
+  pip:
+    name:
+      - "{{ docker_launcher }}"
+    state: latest
+    break_system_packages: true
