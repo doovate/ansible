@@ -120,6 +120,16 @@
           {% endif %}
       when: tf_plan.rc != 0
 
+    - name: Detect disk shrink in plan
+      ansible.builtin.fail:
+        msg: "You cannot shrink the disk size. Shrinking the disk requires creating a new VM."
+      vars:
+        current_size: "{{ tf_plan.stdout | regex_search('~ size\\s+=\\s+\"(\\d+)G\"', '\\1') | first | int }}"
+        new_size: "{{ tf_plan.stdout | regex_search('->\\s+\"(\\d+)G\"', '\\1') | first | int }}"
+      when:
+        - tf_plan.stdout is search('~ size\s+=\s+"\d+G"\s+->\s+"\d+G"')
+        - current_size | int > new_size | int   - name:
+
     - name: Show Tofu outputs
       ansible.builtin.command: >
         tofu output -json
