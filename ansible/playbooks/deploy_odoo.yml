@@ -29,16 +29,5 @@
     - odoo_docker_install_packages
     - odoo_docker
     - odoo_docker_watchdog
-#    - odoo_docker_configure_web_base_url
-    - odoo_traefik_dynamic
-
-- name: Wait for Odoo to be ready and configure web.base.url
-  hosts: "device_roles_odoo:&prod"
-  become: true
-  gather_facts: false
-  tasks:
-    - name: Flush handlers before configuring
-      ansible.builtin.meta: flush_handlers
-
-  roles:
     - odoo_docker_configure_web_base_url
+    - odoo_traefik_dynamic
