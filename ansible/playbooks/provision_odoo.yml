@@ -62,6 +62,10 @@
       failed_when: false
       changed_when: false
 
+    - name: Debug node value
+      ansible.builtin.debug:
+        msg: "{{ hostvars[host]['node'] }}"
+
     # If the VM is not in tfstate, we need to verify if it exists in Proxmox, if it exists, we need
     # to import it into tfstate with its vmid, otherwise we create the VM normally.
     - name: Get all VMs from node
