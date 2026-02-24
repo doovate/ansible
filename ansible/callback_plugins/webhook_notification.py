@@ -208,7 +208,7 @@ class CallbackModule(CallbackBase):
             )
 
             if response.status_code >= 200 and response.status_code < 300:
-                self._display.display(f"Webhook notification sent successfully to {webhook_url}")
+                self._display.display(f"Webhook notification sent successfully")
             else:
                 self._display.warning(
                     f"Webhook notification failed with status {response.status_code}: {response.text}"
