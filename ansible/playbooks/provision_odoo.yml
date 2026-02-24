@@ -69,7 +69,7 @@
         url: "https://51.255.93.43:8006/api2/json/nodes/{{ hostvars[host]['node'] }}/qemu"
         method: GET
         headers:
-          Authorization: "PVEAPIToken={{ lookup('env', 'TF_VAR_proxmox_api_token_secret') }}"
+          Authorization: "PVEAPIToken={{ lookup('env', 'TF_VAR_proxmox_api_token_id') }}={{ lookup('env', 'TF_VAR_proxmox_api_token_secret') }}"
         validate_certs: false
       register: all_vms
       when: tf_state_check.rc != 0
