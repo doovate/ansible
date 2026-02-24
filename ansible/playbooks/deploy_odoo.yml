@@ -29,9 +29,9 @@
     - odoo_docker_install_packages
     - odoo_docker
     - odoo_docker_watchdog
-#    - odoo_docker_configure_web_base_url
     - odoo_traefik_dynamic
 
+# We need to wait for Odoo to be ready before configuring web.base.url
 - name: Wait for Odoo to be ready and configure web.base.url
   hosts: "device_roles_odoo:&prod"
   become: true
