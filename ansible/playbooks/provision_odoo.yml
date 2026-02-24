@@ -136,3 +136,11 @@
         tofu apply -input=false -auto-approve -no-color
       args:
         chdir: "{{ tf_dir }}"
+      register: tf_apply
+      ignore_errors: true
+
+    - name: Fail with clean error message
+      ansible.builtin.fail:
+        msg: >-
+          {{ tf_apply.stderr | regex_findall('Error:.*') | join('\n') }}
+      when: tf_apply.rc != 0
