@@ -1,3 +1,11 @@
+- name: Wait for DB to be ready
+  ansible.builtin.command:
+    cmd: docker exec {{ compose_project_name }}_db pg_isready -U odoo
+  register: pg_ready
+  until: pg_ready.rc == 0
+  retries: 10
+  delay: 5
+
 - name: Get databases
   ansible.builtin.command:
     cmd: docker exec {{ compose_project_name }}_db psql -U odoo -d postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('postgres', 'template0', 'template1');"
