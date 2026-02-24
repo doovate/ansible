@@ -137,4 +137,3 @@
       args:
         chdir: "{{ tf_dir }}"
       register: tf_apply
-      ignore_errors: true
