@@ -76,7 +76,7 @@
 
     - name: Find VM by name
       ansible.builtin.set_fact:
-        found_vm: "{{ all_vms.json.data | selectattr('name', 'equalto', vm_name) | list | first | default(None) }}"
+        found_vm: "{{ all_vms.json.data | selectattr('name', 'equalto',  hostvars[host]['vm_name']) | list | first | default(None) }}"
       when: tf_state_check.rc != 0
 
     - name: Fail if VM is not in tfstate, and is not already created in Proxmox, and vmid is not set
