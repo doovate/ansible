@@ -34,6 +34,7 @@ compose:
   auto_create_database: custom_fields.auto_create_database
   force_rebuild: custom_fields.force_rebuild
   optional_whisper: custom_fields.optional_whisper
+  optional_postgis: custom_fields.optional_postgis
   # Addons to install
   company_addon_map: custom_fields.company_addon_map
   repo_list: custom_fields.repo_list
