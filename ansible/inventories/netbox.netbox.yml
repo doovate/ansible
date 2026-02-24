@@ -23,6 +23,7 @@ compose:
   vcpus: vcpus
   memory: memory
   disk: disk
+  node: cluster
   ### Odoo configurations ###
   compose_project_name: custom_fields.compose_project_name
   deployment_target: custom_fields.deployment_target
