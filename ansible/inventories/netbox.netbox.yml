@@ -19,6 +19,7 @@ keyed_groups:
 # Custom fields
 compose:
   ansible_host: primary_ip4.address.split('/')[0]
+  vm_name: name
   ### VM configurations ###
   vcpus: vcpus
   memory: memory
