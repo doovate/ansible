@@ -15,13 +15,11 @@
     state: absent
     break_system_packages: true
 
-- name: Force reinstall PyJWT
+- name: Make sure PyJWT is installed
   pip:
     name: PyJWT
-    state: latest
+    state: present
     break_system_packages: true
-  environment:
-    PIP_FORCE_REINSTALL: "1"
 
 - name: Install necessary python packages
   pip:
