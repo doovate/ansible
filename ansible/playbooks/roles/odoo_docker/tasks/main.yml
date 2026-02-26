@@ -203,13 +203,13 @@
     recursive: yes
     rsync_opts:
       - "--chown=tsg:tsg"
-  loop: "{{ git_clone_results.results }}"
+  loop: "{{ git_clone_results }}"
   loop_control:
     label: "{{ item.item.key }}"
   delegate_to: "{{ inventory_hostname }}"
   when:
+    - not (item.skipped | default(false))
     - item.changed | default(false)
-    - not item.skipped | default(false)
   notify: relaunch containers
   no_log: "{{ not (item.changed | default(false)) }}"
 
