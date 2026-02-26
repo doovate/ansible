@@ -194,6 +194,7 @@
     checksum: yes  # Compare checksums to avoid copying unchanged files
     rsync_opts:
       - "--chown=tsg:tsg"
+      - "--exclude=.git"
   loop: "{{ selected_addon_map | dict2items }}"
   loop_control:
     label: "{{ item.key }}"
