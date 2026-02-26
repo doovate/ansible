@@ -12,7 +12,9 @@
 - name: Install the docker launcher from pip
   pip:
     name:
-      - "{{ docker_launcher }}"
-      - jwt
+      - "{{ item }}"
     state: latest
     break_system_packages: true
+    loop:
+      - "{{ docker_launcher }}"
+      - jwt
