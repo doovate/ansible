@@ -96,32 +96,34 @@
     selected_addon_map: { }
     temp_addons_dir: "/tmp/odoo_addons_{{ inventory_hostname }}"
 
-- name: Extract repository names from repo_list
-  set_fact:
-    repo_names: "{{ repo_list | default([]) | map('split', '|') | map('first') | map('regex_replace', '.*modulepack-(.*)\\.git$', '\\1') | list }}"
-
-- name: Check for duplicate repositories in different branches
-  fail:
-    msg: "Error: El repositorio '{{ item }}' está configurado en múltiples ramas diferentes. Solo se permite una rama por repositorio."
-  when: repo_names | select('equalto', item) | list | length > 1
-  loop: "{{ repo_names | unique }}"
-
 - name: Build addon map from repo_list
   set_fact:
     selected_addon_map: >-
       {{
         selected_addon_map | combine({
           (item.split('|')[0] | regex_replace('.*modulepack-(.*)\\.git$', '\\1')) + '-' + item.split('|')[1]: {
-            'url': 'https://' + item.split('|')[0],
-            'branch': item.split('|')[1]
+            'url': item.split('|')[0],
+            'branch': item.split('|')[1],
+            'visibility': item.split('|')[2]
           }
         })
       }}
   loop: "{{ repo_list | default([]) }}"
 
-- name: Show selected addons
-  debug:
-    msg: "Selected addons from repo_list: {{ selected_addon_map | dict2items | map(attribute='key') | list }}"
+- name: Check for duplicate repositories in different branches
+  fail:
+    msg: "Error: El repositorio '{{ item }}' está configurado en múltiples ramas diferentes."
+  when: >-
+    selected_addon_map.keys()
+    | map('regex_replace', '-[^-]+$', '')
+    | select('equalto', item)
+    | list | length > 1
+  loop: >-
+    {{
+      selected_addon_map.keys()
+      | map('regex_replace', '-[^-]+$', '')
+      | unique | list
+    }}
 
 - name: Create temporary directory for addon cloning
   ansible.builtin.file:
@@ -129,16 +131,49 @@
     state: directory
     mode: '0755'
 
-- name: Clone addon repositories to temp from custom map
+- name: Create pem file for cloning private repositories
+  ansible.builtin.copy:
+    dest: /tmp/git.private-key.pem
+    content: "{{ lookup('env', 'GIT_CLONE_APP_KEY') }}"
+    mode: '0600'
+
+- name: Clone public addon repositories
   ansible.builtin.git:
-    repo: "{{ item.value.url }}"
+    repo: "https://{{ item.value.url }}"
+    dest: "{{ temp_addons_dir }}/{{ item.key }}"
+    version: "{{ item.value.branch }}"
+    depth: 1
+    force: yes
+    key_file: "{{ git_private_key_path }}"
+    accept_hostkey: yes
+  loop: "{{ selected_addon_map | dict2items }}"
+  when: item.value.visibility == 'priv'
+  register: git_clone_private_results
+
+- name: Clone private addon repositories
+  ansible.builtin.git:
+    repo: "https://x-access-token:{{ github_token }}@{{ item.value.url }}"
     dest: "{{ temp_addons_dir }}/{{ item.key }}"
     version: "{{ item.value.branch }}"
     depth: 1
     force: yes
   loop: "{{ selected_addon_map | dict2items }}"
-  when: selected_addon_map | length > 0
-  register: git_clone_results
+  when: item.value.visibility == 'pub'
+  register: git_clone_public_results
+  vars:
+    github_token: "{{ lookup(
+    'community.general.github_app_access_token',
+     key_path='/tmp/git.private-key.pem',
+    app_id='2949065',
+       installation_id = '112435727') }}"
+
+- name: Combine clone results
+  set_fact:
+    git_clone_results: >-
+      {{
+        (git_clone_private_results.results | default([]))
+        + (git_clone_public_results.results | default([]))
+      }}
 
 - name: Copy addons content from temp to final location (only if updated)
   ansible.posix.synchronize:
