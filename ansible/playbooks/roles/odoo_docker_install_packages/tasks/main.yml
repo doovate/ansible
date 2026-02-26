@@ -19,3 +19,9 @@
     - "{{ docker_launcher }}"
     - PyJWT
     - cryptography
+
+- name: Fix JWT package conflict
+  pip:
+    name: jwt
+    state: absent
+    break_system_packages: true
