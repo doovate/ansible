@@ -137,6 +137,42 @@
     content: "{{ lookup('env', 'GIT_CLONE_APP_KEY') }}"
     mode: '0600'
 
+- name: Generate GitHub App JWT and get access token
+  shell: |
+    python3 - <<'EOF'
+    import jwt, time, requests, sys
+
+    app_id = '{{ lookup("env", "GIT_CLONE_APP_ID") }}'
+    installation_id = '{{ lookup("env", "GIT_CLONE_INSTALLATION_ID") }}'
+
+    private_key = open('/tmp/git.private-key.pem').read()
+
+    payload = {
+        'iat': int(time.time()) - 60,
+        'exp': int(time.time()) + (10 * 60),
+        'iss': app_id
+    }
+
+    encoded_jwt = jwt.encode(payload, private_key, algorithm='RS256')
+
+    response = requests.post(
+        f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+        headers={
+            'Authorization': f'Bearer {encoded_jwt}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    )
+
+    if response.status_code != 201:
+        print(f"ERROR: {response.json()}", file=sys.stderr)
+        sys.exit(1)
+
+    print(response.json()['token'])
+    EOF
+  register: github_token_result
+  delegate_to: localhost
+  no_log: true
+
 - name: Clone public addon repositories
   ansible.builtin.git:
     repo: "https://{{ item.value.url }}"

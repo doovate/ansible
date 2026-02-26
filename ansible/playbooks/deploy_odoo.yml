@@ -9,19 +9,6 @@
           - 'ansible_limit is defined'
         fail_msg: Playbook must be run with a limit
 
-- name: Install controller dependencies
-  hosts: localhost
-  gather_facts: no
-  run_once: yes
-  tasks:
-    - name: Install PyJWT and cryptography on controller
-      pip:
-        name:
-          - PyJWT
-          - cryptography
-        state: latest
-        break_system_packages: true
-
 - name: Deploy and configure a set of Odoo containers
   hosts: "device_roles_odoo:&prod"
   become: true
