@@ -201,6 +201,7 @@
     dest: "{{ odoo_path }}/addons/"
     delete: no
     recursive: yes
+    checksum: yes
     rsync_opts:
       - "--chown=tsg:tsg"
   loop: "{{ git_clone_results }}"
