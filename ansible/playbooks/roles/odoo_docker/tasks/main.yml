@@ -174,7 +174,6 @@
     force: yes
   loop: "{{ selected_addon_map | dict2items }}"
   when: item.value.visibility == 'pub'
-  register: git_clone_private_results
 
 - name: Clone private addon repositories
   ansible.builtin.git:
@@ -185,34 +184,21 @@
     force: yes
   loop: "{{ selected_addon_map | dict2items }}"
   when: item.value.visibility == 'priv'
-  register: git_clone_public_results
 
-- name: Combine clone results
-  set_fact:
-    git_clone_results: >-
-      {{
-        (git_clone_private_results.results | default([]))
-        + (git_clone_public_results.results | default([]))
-      }}
-
-- name: Copy addons content from temp to final location (only if updated)
+- name: Copy addons content from temp to final location (only if changed)
   ansible.posix.synchronize:
-    src: "{{ temp_addons_dir }}/{{ item.item.key }}/"
+    src: "{{ temp_addons_dir }}/{{ item.key }}/"
     dest: "{{ odoo_path }}/addons/"
     delete: no
     recursive: yes
-    checksum: yes
+    checksum: yes  # Compare checksums to avoid copying unchanged files
     rsync_opts:
       - "--chown=tsg:tsg"
-  loop: "{{ git_clone_results }}"
+  loop: "{{ selected_addon_map | dict2items }}"
   loop_control:
-    label: "{{ item.item.key }}"
+    label: "{{ item.key }}"
   delegate_to: "{{ inventory_hostname }}"
-  when:
-    - not (item.skipped | default(false))
-    - item.changed | default(false)
   notify: relaunch containers
-  no_log: "{{ not (item.changed | default(false)) }}"
 
 - name: Find all requirements.txt files in cloned addons
   ansible.builtin.find:
