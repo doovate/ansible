@@ -18,3 +18,4 @@
   loop:
     - "{{ docker_launcher }}"
     - PyJWT
+    - cryptography
