@@ -13,5 +13,6 @@
   pip:
     name:
       - "{{ docker_launcher }}"
+      - PyJWT
     state: latest
     break_system_packages: true
