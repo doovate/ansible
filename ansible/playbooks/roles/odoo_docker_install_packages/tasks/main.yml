@@ -17,4 +17,4 @@
     break_system_packages: true
   loop:
     - "{{ docker_launcher }}"
-    - jwt
+    - PyJWT
