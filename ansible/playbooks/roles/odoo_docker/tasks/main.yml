@@ -184,15 +184,9 @@
   when: item.value.visibility == 'pub'
   register: git_clone_private_results
 
-- name: Generate GitHub App access token
-  set_fact:
-    github_token: "{{ lookup('community.general.github_app_access_token', key_path='/tmp/git.private-key.pem', app_id='2949065', installation_id='112435727') }}"
-  run_once: yes
-  when: selected_addon_map | dict2items | selectattr('value.visibility', 'equalto', 'priv') | list | length > 0
-
 - name: Clone private addon repositories
   ansible.builtin.git:
-    repo: "https://x-access-token:{{ github_token }}@{{ item.value.url }}"
+    repo: "https://x-access-token:{{ github_token_result.stdout }}@{{ item.value.url }}"
     dest: "{{ temp_addons_dir }}/{{ item.key }}"
     version: "{{ item.value.branch }}"
     depth: 1
