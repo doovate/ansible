@@ -9,9 +9,24 @@
     - libxkbcommon0
     - pip
 
-- name: Install the docker launcher from pip
+- name: Fix JWT package conflict
+  pip:
+    name: jwt
+    state: absent
+    break_system_packages: true
+
+- name: Make sure PyJWT is installed
+  pip:
+    name: PyJWT
+    state: present
+    break_system_packages: true
+
+- name: Install necessary python packages
   pip:
     name:
-      - "{{ docker_launcher }}"
+      - "{{ item }}"
     state: latest
     break_system_packages: true
+  loop:
+    - "{{ docker_launcher }}"
+    - cryptography

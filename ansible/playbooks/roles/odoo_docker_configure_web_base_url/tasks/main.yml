@@ -17,3 +17,5 @@
       docker exec {{ compose_project_name }}_db psql -U odoo -d {{ item | trim }}
       -c "UPDATE ir_config_parameter SET value = 'https://{{ domain.split(',')[0] | trim }}' WHERE key = 'web.base.url';"
   loop: "{{ databases.stdout_lines | select('match', '.*\\S.*') | list }}"
+
+# Todo: set web.base.url.freeze to True

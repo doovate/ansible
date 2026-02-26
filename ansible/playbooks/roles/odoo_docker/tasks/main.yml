@@ -96,32 +96,34 @@
     selected_addon_map: { }
     temp_addons_dir: "/tmp/odoo_addons_{{ inventory_hostname }}"
 
-- name: Extract repository names from repo_list
-  set_fact:
-    repo_names: "{{ repo_list | default([]) | map('split', '|') | map('first') | map('regex_replace', '.*modulepack-(.*)\\.git$', '\\1') | list }}"
-
-- name: Check for duplicate repositories in different branches
-  fail:
-    msg: "Error: El repositorio '{{ item }}' está configurado en múltiples ramas diferentes. Solo se permite una rama por repositorio."
-  when: repo_names | select('equalto', item) | list | length > 1
-  loop: "{{ repo_names | unique }}"
-
 - name: Build addon map from repo_list
   set_fact:
     selected_addon_map: >-
       {{
         selected_addon_map | combine({
           (item.split('|')[0] | regex_replace('.*modulepack-(.*)\\.git$', '\\1')) + '-' + item.split('|')[1]: {
-            'url': 'https://' + item.split('|')[0],
-            'branch': item.split('|')[1]
+            'url': item.split('|')[0],
+            'branch': item.split('|')[1],
+            'visibility': item.split('|')[2]
           }
         })
       }}
   loop: "{{ repo_list | default([]) }}"
 
-- name: Show selected addons
-  debug:
-    msg: "Selected addons from repo_list: {{ selected_addon_map | dict2items | map(attribute='key') | list }}"
+- name: Check for duplicate repositories in different branches
+  fail:
+    msg: "Error: El repositorio '{{ item }}' está configurado en múltiples ramas diferentes."
+  when: >-
+    selected_addon_map.keys()
+    | map('regex_replace', '-[^-]+$', '')
+    | select('equalto', item)
+    | list | length > 1
+  loop: >-
+    {{
+      selected_addon_map.keys()
+      | map('regex_replace', '-[^-]+$', '')
+      | unique | list
+    }}
 
 - name: Create temporary directory for addon cloning
   ansible.builtin.file:
@@ -129,34 +131,88 @@
     state: directory
     mode: '0755'
 
-- name: Clone addon repositories to temp from custom map
+- name: Generate GitHub App JWT and get access token
+  shell: |
+    python3 - <<'EOF'
+    import jwt, time, requests, sys
+
+    app_id = '{{ lookup("env", "GIT_CLONE_APP_ID") }}'
+    installation_id = '{{ lookup("env", "GIT_CLONE_INSTALLATION_ID") }}'
+
+    private_key = '{{ lookup("env", "GIT_CLONE_APP_KEY") }}'
+
+    payload = {
+        'iat': int(time.time()) - 60,
+        'exp': int(time.time()) + (10 * 60),
+        'iss': app_id
+    }
+
+    encoded_jwt = jwt.encode(payload, private_key, algorithm='RS256')
+
+    response = requests.post(
+        f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+        headers={
+            'Authorization': f'Bearer {encoded_jwt}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    )
+
+    if response.status_code != 201:
+        print(f"ERROR: {response.json()}", file=sys.stderr)
+        sys.exit(1)
+
+    print(response.json()['token'])
+    EOF
+  register: github_token_result
+
+- name: Clone public addon repositories
   ansible.builtin.git:
-    repo: "{{ item.value.url }}"
+    repo: "https://{{ item.value.url }}"
     dest: "{{ temp_addons_dir }}/{{ item.key }}"
     version: "{{ item.value.branch }}"
     depth: 1
     force: yes
   loop: "{{ selected_addon_map | dict2items }}"
-  when: selected_addon_map | length > 0
-  register: git_clone_results
+  when: item.value.visibility == 'pub'
 
-- name: Copy addons content from temp to final location (only if updated)
+- name: Clone private addon repositories
+  ansible.builtin.git:
+    repo: "https://x-access-token:{{ github_token_result.stdout }}@{{ item.value.url }}"
+    dest: "{{ temp_addons_dir }}/{{ item.key }}"
+    version: "{{ item.value.branch }}"
+    depth: 1
+    force: yes
+  loop: "{{ selected_addon_map | dict2items }}"
+  when: item.value.visibility == 'priv'
+  async: 120
+  poll: 0
+  register: git_clone_async
+
+- name: Wait for all clones to finish
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+  loop: "{{ git_clone_async.results }}"
+  when: item.ansible_job_id is defined
+  register: git_clone_results
+  until: git_clone_results.finished
+  retries: 30
+  delay: 5
+
+- name: Copy addons content from temp to final location (only if changed)
   ansible.posix.synchronize:
-    src: "{{ temp_addons_dir }}/{{ item.item.key }}/"
+    src: "{{ temp_addons_dir }}/{{ item.key }}/"
     dest: "{{ odoo_path }}/addons/"
     delete: no
     recursive: yes
+    checksum: yes  # Compare checksums to avoid copying unchanged files
     rsync_opts:
       - "--chown=tsg:tsg"
-  loop: "{{ git_clone_results.results }}"
+      - "--exclude=.git"
+  loop: "{{ selected_addon_map | dict2items }}"
   loop_control:
-    label: "{{ item.item.key }}"
+    label: "{{ item.key }}"
   delegate_to: "{{ inventory_hostname }}"
-  when:
-    - item.changed | default(false)
-    - not item.skipped | default(false)
   notify: relaunch containers
-  no_log: "{{ not (item.changed | default(false)) }}"
 
 - name: Find all requirements.txt files in cloned addons
   ansible.builtin.find:
