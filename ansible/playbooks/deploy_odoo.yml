@@ -10,10 +10,12 @@
         fail_msg: Playbook must be run with a limit
 
 - name: Install controller dependencies
-  hosts: localhost
+  hosts: all
   gather_facts: no
+  run_once: yes
   tasks:
     - name: Install PyJWT and cryptography on controller
+      delegate_to: localhost
       pip:
         name:
           - PyJWT
