@@ -184,6 +184,19 @@
     force: yes
   loop: "{{ selected_addon_map | dict2items }}"
   when: item.value.visibility == 'priv'
+  async: 120
+  poll: 0
+  register: git_clone_async
+
+- name: Wait for all clones to finish
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
+  loop: "{{ git_clone_async.results }}"
+  when: item.ansible_job_id is defined
+  register: git_clone_results
+  until: git_clone_results.finished
+  retries: 30
+  delay: 5
 
 - name: Copy addons content from temp to final location (only if changed)
   ansible.posix.synchronize:
