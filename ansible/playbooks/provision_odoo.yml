@@ -10,7 +10,6 @@
           - '(ansible_limit | replace(",localhost", "") | replace("localhost,", "")).split(",") | length == 1'
         fail_msg: Playbook must be run with a limit for exactly one host (excluding localhost)
 
-
 - name: Execute OpenTofu from Ansible
   hosts: localhost
   gather_facts: false
