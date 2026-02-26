@@ -15,6 +15,14 @@
     state: absent
     break_system_packages: true
 
+- name: Force reinstall PyJWT
+  pip:
+    name: PyJWT
+    state: latest
+    break_system_packages: true
+  environment:
+    PIP_FORCE_REINSTALL: "1"
+
 - name: Install necessary python packages
   pip:
     name:
@@ -23,5 +31,4 @@
     break_system_packages: true
   loop:
     - "{{ docker_launcher }}"
-    - PyJWT
     - cryptography
