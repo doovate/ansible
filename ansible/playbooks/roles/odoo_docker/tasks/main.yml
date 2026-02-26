@@ -144,10 +144,8 @@
     version: "{{ item.value.branch }}"
     depth: 1
     force: yes
-    key_file: "{{ git_private_key_path }}"
-    accept_hostkey: yes
   loop: "{{ selected_addon_map | dict2items }}"
-  when: item.value.visibility == 'priv'
+  when: item.value.visibility == 'pub'
   register: git_clone_private_results
 
 - name: Clone private addon repositories
@@ -158,7 +156,7 @@
     depth: 1
     force: yes
   loop: "{{ selected_addon_map | dict2items }}"
-  when: item.value.visibility == 'pub'
+  when: item.value.visibility == 'priv'
   register: git_clone_public_results
   vars:
     github_token: "{{ lookup(
