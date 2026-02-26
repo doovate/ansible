@@ -170,8 +170,7 @@
     print(response.json()['token'])
     EOF
   register: github_token_result
-  delegate_to: localhost
-  no_log: true
+#  no_log: true
 
 - name: Clone public addon repositories
   ansible.builtin.git:
