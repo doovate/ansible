@@ -8,14 +8,10 @@
     - libgbm1
     - libxkbcommon0
     - pip
-    -
-- name: Install necessary python packages
+
+- name: Install the docker launcher from pip
   pip:
     name:
-      - "{{ item }}"
+      - "{{ docker_launcher }}"
     state: latest
     break_system_packages: true
-  loop:
-    - "{{ docker_launcher }}"
-    - PyJWT
-    - cryptography
