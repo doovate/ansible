@@ -170,7 +170,11 @@
     print(response.json()['token'])
     EOF
   register: github_token_result
-#  no_log: true
+
+- name: Remove pem file
+  ansible.builtin.file:
+    path: /tmp/git.private-key.pem
+    state: absent
 
 - name: Clone public addon repositories
   ansible.builtin.git:
