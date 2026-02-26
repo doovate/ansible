@@ -131,12 +131,6 @@
     state: directory
     mode: '0755'
 
-- name: Create pem file for cloning private repositories
-  ansible.builtin.copy:
-    dest: /tmp/git.private-key.pem
-    content: "{{ lookup('env', 'GIT_CLONE_APP_KEY') }}"
-    mode: '0600'
-
 - name: Generate GitHub App JWT and get access token
   shell: |
     python3 - <<'EOF'
@@ -145,7 +139,7 @@
     app_id = '{{ lookup("env", "GIT_CLONE_APP_ID") }}'
     installation_id = '{{ lookup("env", "GIT_CLONE_INSTALLATION_ID") }}'
 
-    private_key = open('/tmp/git.private-key.pem').read()
+    private_key = '{{ lookup("env", "GIT_CLONE_APP_KEY") }}'
 
     payload = {
         'iat': int(time.time()) - 60,
@@ -170,11 +164,6 @@
     print(response.json()['token'])
     EOF
   register: github_token_result
-
-- name: Remove pem file
-  ansible.builtin.file:
-    path: /tmp/git.private-key.pem
-    state: absent
 
 - name: Clone public addon repositories
   ansible.builtin.git:
